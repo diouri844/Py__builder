@@ -3,6 +3,39 @@ from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 import os
 
+#------------------- functions -----------------------------------
+
+def create_dir(path_dir,dir_name):
+    try:
+        os.mkdir(path=path_dir+"/"+str(dir_name), mode=777)
+    except Exception as e:
+        print("[Create Folder Error ] : "+str(e))
+    return path_dir+"/"+str(dir_name)
+def create_file_in_folder(path_dir,file_liste):
+    pass
+    return
+
+
+
+def get_default_file(index):
+    liste_resultats = [
+        ['main.py','class.py'],
+        ['main.java','extern_class.java'],
+        ['main.c','biblio.c','biblio.h'],
+        ['main.cpp',"biblio.cpp","biblio.hpp"],
+        ['main.go','extern_services.go'],
+        ['index.html','index.css','Using Javascript','Using Typescript','Using Bootstrap5']
+    ]
+    return liste_resultats[index]
+
+
+
+#------------------------------------------------------------------
+
+
+
+
+
 class Config_Window(QWidget):
     def __init__(self):
         QWidget.__init__(self)
@@ -35,14 +68,10 @@ class Config_Window(QWidget):
             "Java",
             "C",
             "Cpp",
-            "C#",
             "Golang",
-            "Ruby",
-            "Rust",
             "Web app (Html,Css,Js/Ts)"
         ]
         self.project_type_liste.addItems(self.projcet_type_list_data)
-        self.project_type_liste.activated.connect(self.sub_liste_implement)
         #choice config  :
         self.add_user_config_label = QLabel(self)
         self.add_user_config_label.setText(" Project config  :   ")
@@ -130,9 +159,6 @@ class Config_Window(QWidget):
         border:1px solid #004268;
         border-radius: 5px;
         """)
-    def sub_liste_implement(self):
-        print("detected :)  ")
-        return 
     def select_folder(self):
         # open select folder :
         path = os.path.expanduser("~")
@@ -143,10 +169,23 @@ class Config_Window(QWidget):
             self.project_folder_entry.setText(self.path)
         return
     def configuration_default(self):
-        print("Default config :)    ")
+        #test all info :
+        if len(self.project_folder_entry.text())!=0 and len(self.project_name_entry.text())!=0:
+            print("Default config :)    ")
+            project_name = self.project_name_entry.text()
+            user_dir = self.project_folder_entry.text()
+            project_type = self.project_type_liste.currentText()
+            filse_to_create = get_default_file(self.projcet_type_list_data.index(project_type))
+            created_folder = create_dir(user_dir, project_name)
+            print(filse_to_create)
         return
     def personalized_config(self):
-        print("user config :)    ")
+        if len(self.project_folder_entry.text())!=0 and len(self.project_name_entry.text())!=0:
+            print("user config :)    ")
+            user_dir = self.project_folder_entry.text()
+            project_name = self.project_name_entry.text()
+            created_folder = create_dir(user_dir, project_name)
+            print("Project folder :  "+str(created_folder))
         return
     def start(self):
         self.show()
