@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QApplication, QWidget,QPushButton,QLabel,QLineEdit,QFileDialog,QMessageBox,QComboBox
+from PyQt5.QtWidgets import QApplication, QWidget,QPushButton,QLabel,QLineEdit,QFileDialog,QMessageBox,QComboBox,QListWidget
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 import os
@@ -12,7 +12,13 @@ def create_dir(path_dir,dir_name):
         print("[Create Folder Error ] : "+str(e))
     return path_dir+"/"+str(dir_name)
 def create_file_in_folder(path_dir,file_liste):
-    pass
+    for element in file_liste:
+        try:
+            current_file = open(str(path_dir)+"/"+str(element), mode="w") 
+        except Exception as e:
+            print("[file genrator error ]:  "+str(e))
+        finally:
+            current_file.close()
     return
 
 
@@ -32,9 +38,78 @@ def get_default_file(index):
 
 #------------------------------------------------------------------
 
+class popup(QWidget):
+    def __init__(self):
+        QWidget.__init__(self)
+        self.setWindowTitle("Files setup ")
+        self.setWindowIcon(QIcon("Images/icons8-manager-99.png"))
+        self.background_color ="#FAFAFA"
+        self.text_color = "#004268"
+        self.setFixedSize(350,450)
+        self.move(290,150)
+        #add widget :
+        self.title = QLabel(self)
+        self.title.setText("Add files :   ")
+        self.files_name_entry = QLineEdit(self)
+        self.file_add_btn = QPushButton(self)
+        self.file_add_btn.setText("Add !")
+        self.file_add_btn.clicked.connect(self.add_to_setup)
+        # filse liste :
+        self.files_liste_to_add = QListWidget(self)
+        # place widget in the main window :
+        self.title.move(20,20)
+        self.files_name_entry.move(40,55)
+        self.file_add_btn.move(258,95)
+        self.files_liste_to_add.move(40,130)
+        # add css style :
+        self.setStyleSheet("""
+        background-color:"#FAFAFA";
+        padding:5px;
+        """)
+        self.title.setStyleSheet("""
+        background-color:"#FAFAFA";
+        color:"#004268";
+        font-size:15px;
+        """)
+        self.files_name_entry.setStyleSheet("""
+        font-size : 12px;
+        width:250px;
+        height:15px;
+        border:1px solid #004268;
+        border-radius: 5px;
+        color:"#004268";
+        """)
+        self.file_add_btn.setStyleSheet("""
+        font-size : 12px;
+        color:"#004268";
+        border:1px solid #004268;
+        border-radius: 5px;
+        """)
+        self.files_liste_to_add.setStyleSheet("""
+        border:1px solid #004268;
+        border-radius: 5px;
+        color:"#004268";
+        """)
+    def add_to_setup(self):
+        if len(self.files_name_entry.text())!=0:
+            file_name= self.files_name_entry.text()
+            files_arr = file_name.split('/')
+            if files_arr[0]=='':
+                print("folder/")
+                self.files_liste_to_add.addItem(file_name)
+            else:
+                print("file")
+                self.files_liste_to_add.addItem(file_name)
+        return
+    def start(self):
+        self.show()
+        return
 
 
 
+
+
+#-----------------------------------------------------------------
 
 class Config_Window(QWidget):
     def __init__(self):
@@ -175,17 +250,46 @@ class Config_Window(QWidget):
             project_name = self.project_name_entry.text()
             user_dir = self.project_folder_entry.text()
             project_type = self.project_type_liste.currentText()
-            filse_to_create = get_default_file(self.projcet_type_list_data.index(project_type))
-            created_folder = create_dir(user_dir, project_name)
-            print(filse_to_create)
+            self.filse_to_create = get_default_file(self.projcet_type_list_data.index(project_type))
+            self.created_folder = create_dir(user_dir, project_name)
+            #create all files :
+            create_file_in_folder(self.created_folder,self.filse_to_create)
+            #popup ask if you want to open project in your vscode :
+            msg = QMessageBox()
+            msg.setIcon(QMessageBox.Information)
+            msg.setText("Project Created  ! ") 
+            msg.setInformativeText("Open project in vscode ?")
+            msg.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
+            msg.buttonClicked.connect(self.msgopen_vscode)
+            msg.exec_()
+        return
+    def msgopen_vscode(self,i):
+        if i.text() == "OK":
+            #open folder in explorer:
+            open_command = "code "+str(self.created_folder)
+            os.system(open_command)
+        else:
+            msg = QMessageBox()
+            msg.setIcon(QMessageBox.Information)
+            msg.setText("Project Created  ! ") 
+            msg.setInformativeText("Open Folder in explorer ?")
+            msg.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
+            msg.buttonClicked.connect(self.msgshow_folder)
+            msg.exec_()
+        return
+    def msgshow_folder(self,i):
+        if i.text() == "OK":
+            os.startfile(self.created_folder)
         return
     def personalized_config(self):
         if len(self.project_folder_entry.text())!=0 and len(self.project_name_entry.text())!=0:
             print("user config :)    ")
             user_dir = self.project_folder_entry.text()
             project_name = self.project_name_entry.text()
-            created_folder = create_dir(user_dir, project_name)
-            print("Project folder :  "+str(created_folder))
+            self.created_folder = create_dir(user_dir, project_name)
+            #popup to add files :
+            self.my_files_setup = popup()
+            self.my_files_setup.start()
         return
     def start(self):
         self.show()
