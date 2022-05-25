@@ -39,8 +39,9 @@ def get_default_file(index):
 #------------------------------------------------------------------
 
 class popup(QWidget):
-    def __init__(self):
+    def __init__(self,path_folder):
         QWidget.__init__(self)
+        self.project_path_dir = path_folder
         self.setWindowTitle("Files setup ")
         self.setWindowIcon(QIcon("Images/icons8-manager-99.png"))
         self.background_color ="#FAFAFA"
@@ -54,6 +55,9 @@ class popup(QWidget):
         self.file_add_btn = QPushButton(self)
         self.file_add_btn.setText("Add !")
         self.file_add_btn.clicked.connect(self.add_to_setup)
+        self.bnt_start_user_config = QPushButton(self)
+        self.bnt_start_user_config.setText("Start !")
+        self.bnt_start_user_config.clicked.connect(self.start_user_config)
         # filse liste :
         self.files_liste_to_add = QListWidget(self)
         # place widget in the main window :
@@ -61,6 +65,7 @@ class popup(QWidget):
         self.files_name_entry.move(40,55)
         self.file_add_btn.move(258,95)
         self.files_liste_to_add.move(40,130)
+        self.bnt_start_user_config.move(250,350)
         # add css style :
         self.setStyleSheet("""
         background-color:"#FAFAFA";
@@ -90,16 +95,43 @@ class popup(QWidget):
         border-radius: 5px;
         color:"#004268";
         """)
+        self.bnt_start_user_config.setStyleSheet("""
+        font-size : 12px;
+        color:"#FAFAFA";
+        background-color:"#004268";
+        border:1px solid #FAFAFA;
+        border-radius: 5px;
+        """)
     def add_to_setup(self):
         if len(self.files_name_entry.text())!=0:
             file_name= self.files_name_entry.text()
+            self.user_folder_liste = [self.files_liste_to_add.item(i).text() for i in range(self.files_liste_to_add.count())]
             files_arr = file_name.split('/')
             if files_arr[0]=='':
                 print("folder/")
-                self.files_liste_to_add.addItem(file_name)
+                if not file_name in self.user_folder_liste:
+                    self.files_liste_to_add.addItem(file_name)
+                    self.files_name_entry.setText("")
+                else:
+                    self.files_name_entry.setText("")
+                    print("file/folder exist :( ")
             else:
-                print("file")
-                self.files_liste_to_add.addItem(file_name)
+                if not file_name in self.user_folder_liste:
+                    print("file")
+                    self.files_liste_to_add.addItem(file_name)
+                    self.files_name_entry.setText("")
+                else:
+                    self.files_name_entry.setText("")
+                    print("file exist :( ")
+        return
+    def start_user_config(self):
+        for element in self.user_folder_liste:
+            custom_element = element.replace('/','',1)
+            print("#---->  "+str(custom_element))
+            for item in custom_element.split('/')[0:]:
+                print("## --- --- ----> "+str(item))
+                #os.makedirs(os.path.join(custom_element.split('/')[0], item),mode=777)
+            #current_created = create_dir(self.project_path_dir,custom_element)
         return
     def start(self):
         self.show()
@@ -288,7 +320,7 @@ class Config_Window(QWidget):
             project_name = self.project_name_entry.text()
             self.created_folder = create_dir(user_dir, project_name)
             #popup to add files :
-            self.my_files_setup = popup()
+            self.my_files_setup = popup(self.created_folder)
             self.my_files_setup.start()
         return
     def start(self):
