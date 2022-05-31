@@ -125,13 +125,50 @@ class popup(QWidget):
                     print("file exist :( ")
         return
     def start_user_config(self):
+        self.user_folder_liste = [self.files_liste_to_add.item(i).text() for i in range(self.files_liste_to_add.count())]
+        folders_path_glo = []
+        files_glo = []
         for element in self.user_folder_liste:
             custom_element = element.replace('/','',1)
             print("#---->  "+str(custom_element))
+            folder_to_create = []
+            file_to_create = []
+            #detect if custom_element is a files or a folder :
             for item in custom_element.split('/')[0:]:
-                print("## --- --- ----> "+str(item))
-                #os.makedirs(os.path.join(custom_element.split('/')[0], item),mode=777)
-            #current_created = create_dir(self.project_path_dir,custom_element)
+                type_item = ''
+                if len(item.split('.'))>1:
+                    type_item = ':: file ::'
+                    if not item in file_to_create:
+                        file_to_create.append(item)
+                else:
+                    type_item = ':: folder ::'
+                    if not item in folder_to_create:
+                        folder_to_create.append(item)
+                    print("## --- --- ----> "+str(item)+" ::=>  "+str(type_item)) 
+                folders_path_glo.append(folder_to_create)
+                files_glo.append(file_to_create)
+        count = 0
+        for folder in folders_path_glo:
+            path_current = self.project_path_dir
+            for item in folder:
+                try:
+                    os.mkdir(path_current+"/"+str(item),mode=777)
+                    for file_li in files_glo[count]:
+                        try:
+                            current_file = open(path_current+"/"+str(item)+"/"+str(file_li), mode="w") 
+                        except Exception as e:
+                            print("[file genrator error ]:  "+str(e))
+                        finally:
+                            current_file.close()
+                except  Exception as e:
+                    print("[ Error ] :  ( "+str(item)+" ) :=> "+str(e))
+                path_current = path_current +"/"+str(item)
+            try:
+                path_current = self.project_path_dir +"/"+str(folder[0])
+            except Exception as e:
+                print("[ error ]:  "+str(e))
+            finally:
+                count += 1
         return
     def start(self):
         self.show()
