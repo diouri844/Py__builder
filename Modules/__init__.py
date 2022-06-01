@@ -39,9 +39,10 @@ def get_default_file(index):
 #------------------------------------------------------------------
 
 class popup(QWidget):
-    def __init__(self,path_folder):
+    def __init__(self,path_folder,parent_window):
         QWidget.__init__(self)
         self.project_path_dir = path_folder
+        self.previous_task_window = parent_window
         self.setWindowTitle("Files setup ")
         self.setWindowIcon(QIcon("Images/icons8-manager-99.png"))
         self.background_color ="#FAFAFA"
@@ -108,21 +109,17 @@ class popup(QWidget):
             self.user_folder_liste = [self.files_liste_to_add.item(i).text() for i in range(self.files_liste_to_add.count())]
             files_arr = file_name.split('/')
             if files_arr[0]=='':
-                print("folder/")
                 if not file_name in self.user_folder_liste:
                     self.files_liste_to_add.addItem(file_name)
                     self.files_name_entry.setText("")
                 else:
                     self.files_name_entry.setText("")
-                    print("file/folder exist :( ")
             else:
                 if not file_name in self.user_folder_liste:
-                    print("file")
                     self.files_liste_to_add.addItem(file_name)
                     self.files_name_entry.setText("")
                 else:
                     self.files_name_entry.setText("")
-                    print("file exist :( ")
         return
     def start_user_config(self):
         self.user_folder_liste = [self.files_liste_to_add.item(i).text() for i in range(self.files_liste_to_add.count())]
@@ -130,21 +127,17 @@ class popup(QWidget):
         files_glo = []
         for element in self.user_folder_liste:
             custom_element = element.replace('/','',1)
-            print("#---->  "+str(custom_element))
             folder_to_create = []
             file_to_create = []
             #detect if custom_element is a files or a folder :
             for item in custom_element.split('/')[0:]:
                 type_item = ''
                 if len(item.split('.'))>1:
-                    type_item = ':: file ::'
                     if not item in file_to_create:
-                        file_to_create.append(item)
+                        file_to_create.append(custom_element)
                 else:
-                    type_item = ':: folder ::'
                     if not item in folder_to_create:
                         folder_to_create.append(item)
-                    print("## --- --- ----> "+str(item)+" ::=>  "+str(type_item)) 
                 folders_path_glo.append(folder_to_create)
                 files_glo.append(file_to_create)
         count = 0
@@ -153,22 +146,37 @@ class popup(QWidget):
             for item in folder:
                 try:
                     os.mkdir(path_current+"/"+str(item),mode=777)
-                    for file_li in files_glo[count]:
-                        try:
-                            current_file = open(path_current+"/"+str(item)+"/"+str(file_li), mode="w") 
-                        except Exception as e:
-                            print("[file genrator error ]:  "+str(e))
-                        finally:
-                            current_file.close()
                 except  Exception as e:
                     print("[ Error ] :  ( "+str(item)+" ) :=> "+str(e))
                 path_current = path_current +"/"+str(item)
             try:
                 path_current = self.project_path_dir +"/"+str(folder[0])
             except Exception as e:
-                print("[ error ]:  "+str(e))
+                print("[ Error ]:  "+str(e))
             finally:
+                for file_li in files_glo:
+                        try:
+                            current_file = open(self.project_path_dir+"/"+str(file_li[0]), mode="w") 
+                            current_file.close()
+                        except Exception as e:
+                            print("[file genrator ]:  "+str(e))
                 count += 1
+        # folder setup completed : 
+        msg = QMessageBox()
+        msg.setIcon(QMessageBox.Information)
+        msg.setText("Project Created  ! ") 
+        msg.setInformativeText("Open project in vscode ?")
+        msg.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
+        msg.buttonClicked.connect(self.msgopen_vscode)
+        msg.exec_()
+        return
+    def msgopen_vscode(self,i):
+        if i.text() == "OK":
+            #open folder in vscode:
+            open_command = "code "+str(self.project_path_dir)
+            os.system(open_command)
+        self.close()
+        self.previous_task_window.close()
         return
     def start(self):
         self.show()
@@ -315,7 +323,6 @@ class Config_Window(QWidget):
     def configuration_default(self):
         #test all info :
         if len(self.project_folder_entry.text())!=0 and len(self.project_name_entry.text())!=0:
-            print("Default config :)    ")
             project_name = self.project_name_entry.text()
             user_dir = self.project_folder_entry.text()
             project_type = self.project_type_liste.currentText()
@@ -352,12 +359,11 @@ class Config_Window(QWidget):
         return
     def personalized_config(self):
         if len(self.project_folder_entry.text())!=0 and len(self.project_name_entry.text())!=0:
-            print("user config :)    ")
             user_dir = self.project_folder_entry.text()
             project_name = self.project_name_entry.text()
             self.created_folder = create_dir(user_dir, project_name)
             #popup to add files :
-            self.my_files_setup = popup(self.created_folder)
+            self.my_files_setup = popup(self.created_folder,self)
             self.my_files_setup.start()
         return
     def start(self):
